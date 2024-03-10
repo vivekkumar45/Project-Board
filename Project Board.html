@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Board</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .board {
+      display: flex;
+      overflow-x: auto;
+      padding: 20px;
+    }
+
+    .column {
+      flex: 0 0 300px;
+      border-radius: 8px;
+      margin-right: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .not-started .column-header {
+      background-color: #ffc0cb; /* Light Pink */
+    }
+
+    .in-progress .column-header {
+      background-color: #fff68f; /* Light Yellow */
+    }
+
+    .completed .column-header {
+      background-color: #90ee90; /* Light Green */
+    }
+
+    .column-header {
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .task {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 10px;
+      cursor: grab;
+      position: relative;
+    }
+
+    .task:hover {
+      background-color: #f9f9f9;
+    }
+
+    .new-task-button {
+      background-color: #fff;
+      color: #3498db;
+      border: 1px solid #3498db;
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .delete-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #e74c3c;
+      color: #fff;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .task-editable {
+      border: none;
+      cursor: text;
+    }
+
+    .counter {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="column not-started" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <div class="column-header">Not Started<span class="counter">0</span></div>
+      <div class="task" draggable="true" id="task1" ondragstart="drag(event)" onclick="openTaskDetailsModal('Task 1', 'not-started', 'This is Task 1.')">
+        <span class="task-title">Task 1</span>
+      </div>
+      <div class="task" draggable="true" id="task2" ondragstart="drag(event)" onclick="openTaskDetailsModal('Task 2', 'not-started', 'This is Task 2.')">
+        <span class="task-title">Task 2</span>
+      </div>
+      <button class="new-task-button" onclick="addNewTask(this.parentElement)">+ New</button>
+    </div>
+    <div class="column in-progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <div class="column-header">In Progress<span class="counter">0</span></div>
+      <div class="task" draggable="true" id="task3" ondragstart="drag(event)" onclick="openTaskDetailsModal('Task 3', 'in-progress', 'This is Task 3.')">
+        <span class="task-title">Task 3</span>
+      </div>
+      <button class="new-task-button" onclick="addNewTask(this.parentElement)">+ New</button>
+    </div>
+    <div class="column completed" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <div class="column-header">Completed<span class="counter">0</span></div>
+      <div class="task" draggable="true" id="task4" ondragstart="drag(event)" onclick="openTaskDetailsModal('Task 4', 'completed', 'This is Task 4.')">
+        <span class="task-title">Task 4</span>
+      </div>
+      <button class="new-task-button" onclick="addNewTask(this.parentElement)">+ New</button>
+    </div>
+  </div>
+
+  <!-- Task Details Modal -->
+  <div id="taskDetailsModal" class="modal">
+    <div class="modal-content">
+      <h2>Task Details</h2>
+      <label for="taskTitle">Title:</label>
+      <input type="text" id="taskTitle">
+      <label for="taskStatus">Status:</label>
+      <select id="taskStatus">
+        <option value="not-started">Not Started</option>
+        <option value="in-progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+      <label for="taskDescription">Description:</label>
+      <textarea id="taskDescription"></textarea>
+      <button onclick="updateTaskDetails()">Update</button>
+      <button onclick="deleteTask()">Delete</button>
+      <button onclick="closeTaskDetailsModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    let currentTask;
+
+    function addNewTask(column) {
+      const newTask = document.createElement('div');
+      newTask.className = 'task';
+      newTask.draggable = true;
+      newTask.innerHTML = '<span class="task-title" onclick="openTaskDetailsModal(\'New Task\', \'' + column.classList[0] + '\', \'This is a new task.\')">New Task</span>';
+
+      // Insert new task above the button
+      column.insertBefore(newTask, column.querySelector('.new-task-button'));
+
+      // Update the counter
+      updateCounter(column);
+    }
+
+    function openTaskDetailsModal(title, status, description) {
+      currentTask = { title, status, description };
+
+      // Populate modal fields with task details
+      document.getElementById('taskTitle').value = title;
+      document.getElementById('taskStatus').value = status;
+      document.getElementById('taskDescription').value = description;
+
+      // Show the modal
+      document.getElementById('taskDetailsModal').style.display = 'flex';
+    }
+
+    function updateTaskDetails() {
+      // Update task details with the values from the modal
+      currentTask.title = document.getElementById('taskTitle').value;
+      currentTask.status = document.getElementById('taskStatus').value;
+      currentTask.description = document.getElementById('taskDescription').value;
+
+      // Close the modal
+      closeTaskDetailsModal();
+
+      // Update the counter
+      updateCounter(document.querySelector('.' + currentTask.status));
+    }
+
+    function deleteTask() {
+      // Implement task deletion logic here
+      // For simplicity, just remove the task element from the DOM
+      const taskElement = document.getElementById(currentTask.title);
+      taskElement.parentElement.removeChild(taskElement);
+
+      // Close the modal
+      closeTaskDetailsModal();
+
+      // Update the counter
+      updateCounter(document.querySelector('.' + currentTask.status));
+    }
+
+    function closeTaskDetailsModal() {
+      // Hide the modal
+      document.getElementById('taskDetailsModal').style.display = 'none';
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drag(event) {
+      event.dataTransfer.setData('text/plain', event.target.id);
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      const taskId = event.dataTransfer.getData('text/plain');
+      const draggedTask = document.getElementById(taskId);
+      const column = event.target.closest('.column');
+
+      if (column && !column.contains(draggedTask)) {
+        column.insertBefore(draggedTask, event.target);
+
+        // Update the counter for both the current column and the previous column
+        updateCounter(column);
+        const previousColumn = draggedTask.parentElement;
+        updateCounter(previousColumn);
+      }
+    }
+
+    function updateCounter(column) {
+      const counter = column.querySelector('.counter');
+      const count = column.querySelectorAll('.task').length;
+      counter.textContent = count;
+    }
+  </script>
+</body>
+</html>
